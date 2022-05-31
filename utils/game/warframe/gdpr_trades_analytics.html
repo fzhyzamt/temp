@@ -1,1 +1,192 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            margin: 0 auto;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        #fi {
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            border: 1px solid #eee;
+        }
+    </style>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.slim.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css"/>
+    <script>
+        /**
+         * @type {Store[]}
+         */
+        let storeArray = [];
+        /**
+         * @type {Trade[]}
+         */
+        let tradeArray = [];
+
+        class Store {
+            constructor(platinum, items) {
+                this.platinum = platinum;
+                this.items = items;
+            }
+        }
+
+        class Trade {
+            constructor() {
+                this.time = null;
+                this.given = {};
+                this.received = {};
+            }
+        }
+
+        function draw() {
+            let storeSum, tradeGivenSum, tradeReceivedSum;
+            storeSum = tradeGivenSum = tradeReceivedSum = 0;
+            storeArray.forEach(t => storeSum += t.platinum);
+            tradeArray.forEach(t => {
+                if (t.given.PLATINUM) {
+                    tradeGivenSum += t.given.PLATINUM;
+                }
+                if (t.received.PLATINUM) {
+                    tradeReceivedSum += t.received.PLATINUM;
+                }
+            })
+
+            let h = (dest, val) => `<tr><td>${dest}</td><td>${val}</td></tr>`;
+            $('#totalTable tbody').html(
+                h('商店总支出', storeSum) +
+                h('交易总支出', -tradeGivenSum) +
+                h('交易总收入', tradeReceivedSum) +
+                h('合计', tradeReceivedSum - storeSum + tradeGivenSum)
+            );
+            $('#totalTable').DataTable({
+                paging: false,
+            });
+            $('#storeTable').DataTable({
+                data: storeArray,
+                paging: false,
+                columns: [
+                    {data: 'platinum'},
+                    {data: 'items'},
+                ]
+            });
+            let renderTrade = (data, type, row) => {
+                return Object.entries(data)
+                    .map(e => e[1] ? e[0] + ' ' + e[1] : e[0])
+                    .join('<br>');
+            };
+            $('#tradeTable').DataTable({
+                data: tradeArray,
+                paging: false,
+                columns: [
+                    {data: 'time', render: DataTable.render.datetime()},
+                    {data: 'given', render: renderTrade},
+                    {data: 'received', render: renderTrade},
+                ]
+            });
+        }
+
+        function process(text) {
+            window.text = text;
+            let [storeText, tradeText] = text.split(/\nTRADES\s:\s\d+/);
+
+            const storePtn = /STORE PURCHASE\s+PLATINUM : (\d+)\s+ITEMS RECIEVED :\r?\n((?:\t\t[^\n]+\n*)+)/g;
+            const tradePtn = /\r?\n(.+)\r?\n\tTRADED ITEMS GIVEN :\r?\n((?:\t\t(?:[\w ]+: [-\d]+|[\w ]+)\r?\n)+)\tTRADED ITEMS RECIEVED :\r?\n((?:\t\t(?:[\w ]+: [-\d]+|[\w ]+)\r?\n)+)/g;
+
+            let m;
+            do {
+                m = storePtn.exec(storeText);
+                if (m) {
+                    storeArray.push(new Store(parseInt(m[1]), m[2]));
+                }
+            } while (m);
+
+            let parseTradeLine = (line, container) => {
+                if (!line) return;
+                let [k, v] = line.split(':');
+                k = k.trim();
+                if (k === 'CREDITS') return;
+                container[k] = parseInt(v);
+            };
+            do {
+                m = tradePtn.exec(tradeText);
+                if (!m) break;
+
+                let trade = new Trade();
+                trade.time = new Date(m[1]);
+                m[2].split(/\r?\n/).forEach(line => {
+                    parseTradeLine(line, trade.given);
+                });
+                m[3].split(/\r?\n/).forEach(line => {
+                    parseTradeLine(line, trade.received);
+                });
+
+                tradeArray.push(trade);
+            } while (m);
+        }
+
+        $(function () {
+            // $('table').each((_,t) => $(t).DataTable());
+            $('#fi').on('change', function () {
+                if (this.files.length === 0) {
+                    alert('未选择文件!');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function fileReadCompleted() {
+                    process(reader.result);
+                    console.log(storeArray);
+                    console.log(tradeArray);
+                    draw();
+                };
+                reader.readAsText(this.files[0]);
+            });
+        });
+    </script>
+</head>
+<body>
+<input type="file" id="fi"/>
+<div id="shower">
+    <table id="totalTable">
+        <thead>
+        <tr>
+            <td>种类</td>
+            <td>白金</td>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+    <table id="storeTable">
+        <caption>商店支出</caption>
+        <thead>
+        <tr>
+            <td>白金</td>
+            <td>物品</td>
+        </tr>
+        </thead>
+    </table>
+    <table id="tradeTable">
+        <caption>交易</caption>
+        <thead>
+        <tr>
+            <td>时间</td>
+            <td>给予</td>
+            <td>收取</td>
+        </tr>
+        </thead>
+    </table>
+</
+>
+</body>
+</html>
