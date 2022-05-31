@@ -69,6 +69,8 @@
             );
             $('#totalTable').DataTable({
                 paging: false,
+                ordering: false,
+                searching: false,
             });
             $('#storeTable').DataTable({
                 data: storeArray,
@@ -122,10 +124,10 @@
 
                 let trade = new Trade();
                 trade.time = new Date(m[1]);
-                m[2].split(/\r?\n/).forEach(line => {
+                m[2] && m[2].split(/\r?\n/).forEach(line => {
                     parseTradeLine(line, trade.given);
                 });
-                m[3].split(/\r?\n/).forEach(line => {
+                m[3] && m[3].split(/\r?\n/).forEach(line => {
                     parseTradeLine(line, trade.received);
                 });
 
