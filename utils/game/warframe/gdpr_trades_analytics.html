@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,7 +99,7 @@
             let [storeText, tradeText] = text.split(/\nTRADES\s:\s\d+/);
 
             const storePtn = /STORE PURCHASE\s+PLATINUM : (\d+)\s+ITEMS RECIEVED :\r?\n((?:\t\t[^\n]+\n*)+)/g;
-            const tradePtn = /\r?\n(.+)\r?\n\tTRADED ITEMS GIVEN :\r?\n((?:\t\t(?:[\w ]+: [-\d]+|[\w ]+)\r?\n)+)\tTRADED ITEMS RECIEVED :\r?\n((?:\t\t(?:[\w ]+: [-\d]+|[\w ]+)\r?\n)+)/g;
+            const tradePtn = /\r?\n(.+)\r?\n\tTRADED ITEMS GIVEN :\r?\n((?:\t\t(?:[\w &'|]+: [-\d]+|[\w &'|]+)\r?\n)+)\tTRADED ITEMS RECIEVED :\r?\n((?:\t\t(?:[\w &'|]+: [-\d]+|[\w &'|]+)\r?\n)+)?/g;
 
             let m;
             do {
